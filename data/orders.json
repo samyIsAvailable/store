@@ -1,0 +1,23 @@
+[
+  {
+    "id": "t6cmox-a22j",
+    "customerName": "Samy Nasri",
+    "email": "",
+    "phone": "0561374110",
+    "address": {
+      "street": "sss",
+      "city": "Constantine"
+    },
+    "items": [
+      {
+        "name": "Premium Hoodie (Red, L)",
+        "qty": 1,
+        "price": 2990
+      }
+    ],
+    "total": 3590,
+    "notes": "qq",
+    "status": "delivered",
+    "createdAt": "2025-11-26T19:41:21.776Z"
+  }
+]

@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>My Algerian Store - Premium Hoodie</title>
+    <meta name="description" content="Modern product landing page with Algerian COD payment (Nom, Téléphone, Wilaya, Adresse, Couleur, Taille)." />
+    <style>
+        :root{
+            --bg: #0b0f19;
+            --card: #121725;
+            --muted: #8ea0b5;
+            --text: #eaf0f8;
+            --primary: #4f7cf7;
+            --primary-2: #7b5cf7;
+            --accent: #15c39a;
+            --danger: #ff5f6d;
+            --shadow: 0 10px 30px rgba(0,0,0,.35);
+            --radius: 16px;
+
+            /* Admin panel integration (read via JS from :root) */
+            --admin-base-url: "https://admin.my-algerian-store.com";
+            --admin-orders-endpoint: "/api/orders";
+            --admin-auth-token: ""; /* optional API key/JWT */
+        }
+        *{box-sizing:border-box}
+        html,body{height:100%}
+        body{
+            margin:0;
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji", "Segoe UI Symbol";
+            background:
+                radial-gradient(1200px 600px at 10% -50%, #2a3a6b55, transparent 70%),
+                radial-gradient(1200px 600px at 110% -30%, #7b5cf755, transparent 70%),
+                linear-gradient(180deg, #0b0f19 0%, #0b0f19 100%);
+            color: var(--text);
+        }
+        a{color:inherit;text-decoration:none}
+        .container{max-width:1100px;margin:0 auto;padding:32px}
+        header{
+            display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;
+        }
+        .brand{
+            display:flex;align-items:center;gap:12px;font-weight:700;font-size:20px;
+        }
+        .brand .logo{
+            width:36px;height:36px;border-radius:10px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-2));
+            box-shadow: 0 6px 20px rgba(79,124,247,.35);
+        }
+        .contact-row{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:14px}
+        .badge{
+            display:inline-flex;align-items:center;gap:8px;
+            padding:8px 12px;border-radius:999px;background:#162038;color:#bdc9da;font-size:12px
+        }
+        .hero{
+            display:grid;grid-template-columns: 1.05fr .95fr;gap:28px;
+            align-items:stretch;margin-top:8px;
+        }
+        .card{
+            background: var(--card);
+            border: 1px solid #1c2436;
+            box-shadow: var(--shadow);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .product{
+            padding:24px 24px 8px;
+        }
+        .product-header{
+            display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:8px;
+        }
+        .title{font-size:26px;font-weight:700;line-height:1.15}
+        .subtitle{color:var(--muted);font-size:14px}
+        .price{
+            display:flex;align-items:center;gap:10px;
+            background:#142035;border:1px solid #1c2a42;color:#cfe3ff;
+            padding:8px 12px;border-radius:12px;font-weight:700
+        }
+        .media{
+            display:grid;place-items:center;background:#0f1423;border-top:1px solid #1c2436;padding:28px;
+        }
+        .mock{
+            width:100%;max-width:480px;aspect-ratio:1/1;border-radius:22px;
+            background:
+                linear-gradient(135deg, #0d1220 0%, #111830 100%),
+                radial-gradient(120% 120% at 10% 10%, rgba(255,255,255,.05), transparent 40%);
+            border:1px solid #1c2436;
+            position:relative;overflow:hidden;box-shadow: 0 25px 60px rgba(0,0,0,.45);
+        }
+        .mock::before{
+            content:"";
+            position:absolute;inset:22px;border-radius:16px;
+            background:
+                linear-gradient(135deg, #303a5f, #19213c 60%),
+                radial-gradient(180% 120% at -10% 30%, rgba(123,92,247,.35), transparent 50%),
+                radial-gradient(160% 100% at 100% -10%, rgba(21,195,154,.25), transparent 60%);
+            border:1px solid #3a4a7a;
+        }
+        .mock .strap{
+            position:absolute;left:-18px;top:50%;transform:translateY(-50%);
+            width:40px;height:70%;border-radius:10px;background:#1e2a44;border:1px solid #2a3a6b;
+            filter:blur(.3px)
+        }
+        .mock .shine{
+            position:absolute;right:0;top:0;bottom:0;width:42%;
+            background: linear-gradient(90deg, rgba(255,255,255,.06), transparent);
+        }
+        .features{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0 22px}
+        .chip{background:#162038;border:1px solid #1c2436;border-radius:12px;padding:10px 12px;color:#c9d7ea;font-size:13px}
+        .order{
+            padding:24px;
+            display:grid;gap:18px
+        }
+        .order h3{margin:0;font-size:20px}
+        form{display:grid;gap:14px}
+        .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+        label{font-size:13px;color:#b9c5d8;margin-bottom:6px;display:block}
+        input, select, textarea{
+            width:100%;padding:12px 12px;border-radius:10px;
+            border:1px solid #24314f;background:#0f1628;color:#eaf0f8;
+            outline:none;transition:.15s border-color ease;
+        }
+        input:focus, select:focus, textarea:focus{border-color:#4f7cf7}
+        textarea{min-height:88px;resize:vertical}
+        .swatches{display:flex;gap:10px;flex-wrap:wrap}
+        .swatch{
+            position:relative;width:38px;height:38px;border-radius:10px;border:2px solid transparent;
+            cursor:pointer;box-shadow: 0 6px 16px rgba(0,0,0,.35)
+        }
+        .swatch input{position:absolute;opacity:0;pointer-events:none}
+        .swatch[data-color="Black"]{background:#0c0c0c;border-color:#2a2a2a}
+        .swatch[data-color="White"]{background:#f3f5f7;border-color:#cfd6de}
+        .swatch[data-color="Red"]{background:#e63946}
+        .swatch[data-color="Blue"]{background:#3a86ff}
+        .swatch[data-color="Green"]{background:#15c39a}
+        .swatch.active{outline:2px solid var(--primary);outline-offset:2px}
+        .sizes{display:flex;gap:10px;flex-wrap:wrap}
+        .size{
+            padding:10px 14px;border-radius:10px;border:1px solid #24314f;background:#0f1628;color:#eaf0f8;
+            cursor:pointer;user-select:none;font-weight:600
+        }
+        .size.active{border-color:var(--primary);box-shadow:0 0 0 2px rgba(79,124,247,.35) inset}
+        .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+        .total{display:flex;flex-direction:column}
+        .total small{color:#9fb1c8}
+        .btn{
+            display:inline-flex;align-items:center;justify-content:center;gap:10px;
+            padding:12px 16px;border-radius:12px;border:1px solid #3450a8;color:#eaf0f8;
+            background: linear-gradient(135deg, var(--primary), var(--primary-2));
+            box-shadow: 0 10px 20px rgba(79,124,247,.35);cursor:pointer;font-weight:700
+        }
+        .btn.secondary{
+            background:#162038;border-color:#24314f;box-shadow:none;color:#cfe3ff
+        }
+        .hint{color:#9fb1c8;font-size:12px}
+        .cod{display:flex;align-items:center;gap:8px;color:#a9d7c8;background:#10241f;border:1px solid #1d4237;padding:8px 12px;border-radius:8px;font-size:12px}
+        .cod .dot{width:8px;height:8px;border-radius:999px;background:var(--accent)}
+        footer{margin:26px auto 12px;color:#8095ad;font-size:12px;text-align:center}
+        .modal{
+            position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;place-items:center;padding:20px;z-index:50
+        }
+        .modal .panel{
+            width:100%;max-width:640px;background:var(--card);border:1px solid #1c2436;border-radius:16px;box-shadow:var(--shadow);overflow:hidden
+        }
+        .panel header{padding:16px 18px;border-bottom:1px solid #1c2436}
+        .panel .content{padding:18px}
+        .summary{background:#10182b;border:1px dashed #24314f;border-radius:12px;padding:12px;margin-top:8px;color:#cfe3ff}
+        .close{appearance:none;background:transparent;border:0;color:#9fb1c8;font-weight:700;cursor:pointer}
+        .toast{
+            position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+            background:#142035;border:1px solid #24314f;color:#cfe3ff;padding:10px 14px;border-radius:10px;display:none
+        }
+        @media (max-width: 980px){
+            .hero{grid-template-columns:1fr}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="brand">
+                <div class="logo" aria-hidden="true"></div>
+                <div>My Algerian Store</div>
+            </div>
+            <div class="contact-row">
+                <span class="badge">Livraison nationale • الدفع عند الاستلام</span>
+                <span class="badge">Support: +213 XX XX XX XX</span>
+            </div>
+        </header>
+
+        <section class="hero">
+            <article class="card product" aria-label="Product">
+                <div class="product-header">
+                    <div>
+                        <div class="title">Premium Hoodie</div>
+                        <div class="subtitle">Soft fleece, unisex, high-quality print</div>
+                    </div>
+                    <div class="price"><span id="price">2 990</span> DZD</div>
+                </div>
+
+                <div class="media">
+                    <div class="mock">
+                        <div class="strap"></div>
+                        <div class="shine"></div>
+                    </div>
+                </div>
+
+                <div class="features">
+                    <div class="chip">Warm & breathable</div>
+                    <div class="chip">Free size exchanges</div>
+                    <div class="chip">7-day return</div>
+                </div>
+            </article>
+
+            <aside class="card order" aria-label="Order form">
+                <h3>Order & Pay on Delivery</h3>
+                <div class="cod"><span class="dot"></span> Paiement à la livraison • الدفع عند الاستلام</div>
+
+                <form id="orderForm" novalidate>
+                    <div class="grid-2">
+                        <div>
+                            <label for="name">Nom et Prénom</label>
+                            <input id="name" name="name" placeholder="Ex: Ahmed Ben Ali" required />
+                        </div>
+                        <div>
+                            <label for="phone">Téléphone (0xx… / +213…)</label>
+                            <input id="phone" name="phone" placeholder="05 50 12 34 56" required
+                                         pattern="^(0[567]\d{8}|(\+?213)[567]\d{8})$" />
+                            <div class="hint">Mobiles: 05/06/07…, or +213 without leading 0</div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div>
+                            <label for="wilaya">Wilaya</label>
+                            <select id="wilaya" name="wilaya" required>
+                                <option value="" disabled selected>Choisir…</option>
+                                <option>01 - Adrar</option>
+                                <option>02 - Chlef</option>
+                                <option>03 - Laghouat</option>
+                                <option>04 - Oum El Bouaghi</option>
+                                <option>05 - Batna</option>
+                                <option>06 - Béjaïa</option>
+                                <option>07 - Biskra</option>
+                                <option>08 - Béchar</option>
+                                <option>09 - Blida</option>
+                                <option>10 - Bouira</option>
+                                <option>11 - Tamanrasset</option>
+                                <option>12 - Tébessa</option>
+                                <option>13 - Tlemcen</option>
+                                <option>14 - Tiaret</option>
+                                <option>15 - Tizi Ouzou</option>
+                                <option>16 - Alger</option>
+                                <option>17 - Djelfa</option>
+                                <option>18 - Jijel</option>
+                                <option>19 - Sétif</option>
+                                <option>20 - Saïda</option>
+                                <option>21 - Skikda</option>
+                                <option>22 - Sidi Bel Abbès</option>
+                                <option>23 - Annaba</option>
+                                <option>24 - Guelma</option>
+                                <option>25 - Constantine</option>
+                                <option>26 - Médéa</option>
+                                <option>27 - Mostaganem</option>
+                                <option>28 - M’Sila</option>
+                                <option>29 - Mascara</option>
+                                <option>30 - Ouargla</option>
+                                <option>31 - Oran</option>
+                                <option>32 - El Bayadh</option>
+                                <option>33 - Illizi</option>
+                                <option>34 - Bordj Bou Arréridj</option>
+                                <option>35 - Boumerdès</option>
+                                <option>36 - El Tarf</option>
+                                <option>37 - Tindouf</option>
+                                <option>38 - Tissemsilt</option>
+                                <option>39 - El Oued</option>
+                                <option>40 - Khenchela</option>
+                                <option>41 - Souk Ahras</option>
+                                <option>42 - Tipaza</option>
+                                <option>43 - Mila</option>
+                                <option>44 - Aïn Defla</option>
+                                <option>45 - Naâma</option>
+                                <option>46 - Aïn Témouchent</option>
+                                <option>47 - Ghardaïa</option>
+                                <option>48 - Relizane</option>
+                                <option>49 - Timimoun</option>
+                                <option>50 - Bordj Badji Mokhtar</option>
+                                <option>51 - Ouled Djellal</option>
+                                <option>52 - Beni Abbès</option>
+                                <option>53 - In Salah</option>
+                                <option>54 - In Guezzam</option>
+                                <option>55 - Touggourt</option>
+                                <option>56 - Djanet</option>
+                                <option>57 - El M’Ghair</option>
+                                <option>58 - El Menia</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="address">Adresse complète</label>
+                            <input id="address" name="address" placeholder="Rue, Commune, Code postal" required />
+                        </div>
+                    </div>
+
+                    <div class="grid-3">
+                        <div>
+                            <label>Couleur</label>
+                            <div class="swatches" id="colorSwatches" role="radiogroup" aria-label="Couleur">
+                                <label class="swatch" data-color="Black" title="Noir">
+                                    <input type="radio" name="color" value="Black" required />
+                                </label>
+                                <label class="swatch" data-color="White" title="Blanc">
+                                    <input type="radio" name="color" value="White" />
+                                </label>
+                                <label class="swatch" data-color="Red" title="Rouge">
+                                    <input type="radio" name="color" value="Red" />
+                                </label>
+                                <label class="swatch" data-color="Blue" title="Bleu">
+                                    <input type="radio" name="color" value="Blue" />
+                                </label>
+                                <label class="swatch" data-color="Green" title="Vert">
+                                    <input type="radio" name="color" value="Green" />
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <label>Taille</label>
+                            <div class="sizes" id="sizeGroup" role="radiogroup" aria-label="Taille">
+                                <button type="button" class="size" data-size="S">S</button>
+                                <button type="button" class="size" data-size="M">M</button>
+                                <button type="button" class="size" data-size="L">L</button>
+                                <button type="button" class="size" data-size="XL">XL</button>
+                                <button type="button" class="size" data-size="XXL">XXL</button>
+                                <input type="hidden" name="size" id="size" required />
+                            </div>
+                        </div>
+                        <div>
+                            <label for="qty">Quantité</label>
+                            <input id="qty" name="qty" type="number" min="1" value="1" required />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="notes">Notes (optionnel)</label>
+                        <textarea id="notes" name="notes" placeholder="Instructions de livraison, point de repère…"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="total">
+                            <strong>Total estimé: <span id="total">—</span> DZD</strong>
+                            <small id="shipInfo">Frais de livraison calculés selon la wilaya</small>
+                        </div>
+                        <div style="display:flex;gap:10px">
+                            <button type="button" class="btn secondary" id="previewBtn">Aperçu</button>
+                            <button type="submit" class="btn">Commander</button>
+                        </div>
+                    </div>
+                </form>
+            </aside>
+        </section>
+
+        <footer>
+            © 2025 My Algerian Store — Livraison partout en Algérie. Les prix peuvent varier selon la wilaya.
+        </footer>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="panel">
+            <header>
+                <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+                    <strong>Aperçu de commande</strong>
+                    <button class="close" id="closeModal">Fermer</button>
+                </div>
+            </header>
+            <div class="content">
+                <div id="summary" class="summary"></div>
+                <div style="display:flex;gap:10px;margin-top:12px">
+                    <button class="btn secondary" id="copySummary">Copier</button>
+                    <a class="btn" id="waLink" target="_blank" rel="noopener">Envoyer sur WhatsApp</a>
+                </div>
+                <div class="hint" style="margin-top:10px">Nous vous contacterons pour confirmer la commande et la livraison.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Copié dans le presse-papiers</div>
+
+    <script>
+        // Robust API base that works from file:// and http:// origins
+        const API_BASE = (typeof location !== 'undefined' && location.origin && location.origin.startsWith('http'))
+            ? (location.origin + '/api')
+            : 'http://localhost:3000/api';
+        // Product base price (DZD)
+        const BASE_PRICE = 2990;
+
+        // Shipping rules (simple Algeria-style)
+        const SOUTH = new Set([
+            "01 - Adrar","11 - Tamanrasset","33 - Illizi","37 - Tindouf","49 - Timimoun",
+            "50 - Bordj Badji Mokhtar","53 - In Salah","54 - In Guezzam","56 - Djanet",
+            "30 - Ouargla","55 - Touggourt","57 - El M’Ghair","58 - El Menia","47 - Ghardaïa","32 - El Bayadh"
+        ]);
+        const ALGIERS = "16 - Alger";
+        function shippingFee(wilaya){
+            if(!wilaya) return 0;
+            if(wilaya === ALGIERS) return 400;
+            if(SOUTH.has(wilaya)) return 900;
+            return 600; // default north-center
+        }
+
+        // Format DZD with thin space thousands
+        const fmt = n => (Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " "));
+
+        // Elements
+        const priceEl = document.getElementById('price');
+        const totalEl = document.getElementById('total');
+        const shipInfoEl = document.getElementById('shipInfo');
+        const form = document.getElementById('orderForm');
+        const qtyEl = document.getElementById('qty');
+        const wilayaEl = document.getElementById('wilaya');
+        const modal = document.getElementById('modal');
+        const closeModalBtn = document.getElementById('closeModal');
+        const summaryEl = document.getElementById('summary');
+        const copyBtn = document.getElementById('copySummary');
+        const toast = document.getElementById('toast');
+        const waLink = document.getElementById('waLink');
+        const colorSwatches = document.getElementById('colorSwatches');
+        const sizeGroup = document.getElementById('sizeGroup');
+        const sizeHidden = document.getElementById('size');
+        const previewBtn = document.getElementById('previewBtn');
+
+        priceEl.textContent = fmt(BASE_PRICE);
+
+        function computeTotal(){
+            const qty = Math.max(1, parseInt(qtyEl.value || 1, 10));
+            const ship = shippingFee(wilayaEl.value);
+            const sub = BASE_PRICE * qty;
+            const total = sub + ship;
+            totalEl.textContent = fmt(total);
+            shipInfoEl.textContent = `Sous-total ${fmt(sub)} DZD + Livraison ${fmt(ship)} DZD`;
+        }
+
+        qtyEl.addEventListener('input', computeTotal);
+        wilayaEl.addEventListener('change', computeTotal);
+        computeTotal();
+
+        // Color swatches UI
+        colorSwatches.addEventListener('change', () => {
+            [...colorSwatches.querySelectorAll('.swatch')].forEach(s => s.classList.remove('active'));
+            const checked = colorSwatches.querySelector('input[name="color"]:checked');
+            if(checked){
+                checked.parentElement.classList.add('active');
+            }
+        });
+
+        // Size UI
+        sizeGroup.addEventListener('click', (e) => {
+            const btn = e.target.closest('.size');
+            if(!btn) return;
+            sizeHidden.value = btn.dataset.size;
+            [...sizeGroup.querySelectorAll('.size')].forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+
+        // Simple phone validation helper
+        function validPhone(v){
+            return /^(0[567]\d{8}|(\+?213)[567]\d{8})$/.test((v||"").replace(/\s+/g,''));
+        }
+
+        function buildSummary(data){
+            const ship = shippingFee(data.wilaya);
+            const sub = BASE_PRICE * data.qty;
+            const total = sub + ship;
+            return [
+                `Produit: Premium Hoodie`,
+                `Couleur: ${data.color}`,
+                `Taille: ${data.size}`,
+                `Quantité: ${data.qty}`,
+                `Prix unitaire: ${fmt(BASE_PRICE)} DZD`,
+                `Sous-total: ${fmt(sub)} DZD`,
+                `Livraison (${data.wilaya}): ${fmt(ship)} DZD`,
+                `Total: ${fmt(total)} DZD`,
+                `Client: ${data.name}`,
+                `Téléphone: ${data.phone}`,
+                `Adresse: ${data.address}`,
+                data.notes ? `Notes: ${data.notes}` : null,
+                `Paiement: À la livraison`
+            ].filter(Boolean).join('\n');
+        }
+
+        function openModal(){
+            modal.style.display = 'grid';
+        }
+        function closeModal(){
+            modal.style.display = 'none';
+        }
+        closeModalBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e)=>{ if(e.target === modal) closeModal(); });
+
+        function showToast(){
+            toast.style.display = 'block';
+            setTimeout(()=> toast.style.display = 'none', 1800);
+        }
+
+        function formData(){
+            return {
+                name: form.name.value.trim(),
+                phone: form.phone.value.trim(),
+                wilaya: form.wilaya.value,
+                address: form.address.value.trim(),
+                color: (form.querySelector('input[name="color"]:checked')?.value || '').trim(),
+                size: sizeHidden.value.trim(),
+                qty: Math.max(1, parseInt(form.qty.value || 1, 10)),
+                notes: form.notes.value.trim()
+            };
+        }
+
+        function validate(){
+            const d = formData();
+            let ok = true;
+            // Basic checks
+            ['name','phone','wilaya','address'].forEach(k=>{
+                if(!d[k]) ok = false;
+            });
+            if(!d.color) ok = false;
+            if(!d.size) ok = false;
+            if(!validPhone(d.phone)) ok = false;
+            return ok;
+        }
+
+        previewBtn.addEventListener('click', ()=>{
+            if(!validate()){
+                alert('Veuillez remplir tous les champs correctement.');
+                return;
+            }
+            const d = formData();
+            summaryEl.textContent = buildSummary(d);
+            const waMsg = encodeURIComponent(buildSummary(d));
+            const storeNumber = '213561374110'; // Remplacez par votre numéro WhatsApp (sans 0 initial)
+            waLink.href = `https://wa.me/${storeNumber}?text=${waMsg}`;
+            openModal();
+        });
+
+        form.addEventListener('submit', async (e)=>{
+            e.preventDefault();
+            if(!validate()){
+                alert('Veuillez remplir tous les champs correctement.');
+                return;
+            }
+            const d = formData();
+            // Send order to backend API for admin panel
+            const orderPayload = {
+                name: d.name,
+                phone: d.phone,
+                wilaya: d.wilaya,
+                address: d.address,
+                color: d.color,
+                size: d.size,
+                qty: d.qty,
+                notes: d.notes
+            };
+            try{
+                const res = await fetch(API_BASE + '/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderPayload)
+                });
+                if(!res.ok) throw new Error('Échec de l\'envoi');
+                const created = await res.json();
+                // Redirect to thank-you page with order id
+                const base = (typeof location !== 'undefined' && location.origin && location.origin.startsWith('http'))
+                    ? location.origin
+                    : 'http://localhost:3000';
+                window.location.href = `${base}/thank-you.html?id=${encodeURIComponent(created.id)}`;
+            }catch(err){
+                console.warn('Order failed', err);
+                alert('Impossible d\'enregistrer la commande. Réessayez plus tard.');
+            }
+        });
+
+        copyBtn.addEventListener('click', async ()=>{
+            try{
+                await navigator.clipboard.writeText(summaryEl.textContent);
+                showToast();
+            }catch(e){
+                alert('Copie impossible sur ce navigateur.');
+            }
+        });
+    </script>
+</body>
+</html>

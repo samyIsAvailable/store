@@ -1,0 +1,370 @@
+<!-- File: admin.html -->
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Admin Panel — My Algerian Store</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        :root { color-scheme: light dark; --bg:#0b0b0b; --fg:#eaeaea; --muted:#9aa0a6; --accent:#2b7dfa; --danger:#c0392b; --ok:#2ecc71; --card:#171717; --border:#2a2a2a; }
+        body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--fg); }
+        header { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; gap:12px; align-items:center; justify-content:space-between; background:var(--card); position:sticky; top:0; z-index:10; }
+        header h1 { font-size:16px; margin:0; }
+        .controls { display:flex; gap:8px; flex-wrap:wrap; }
+        .controls input,.controls select,.controls button { padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:#111; color:var(--fg); }
+        .controls button { cursor:pointer; }
+        main { padding:18px; max-width:1100px; margin:0 auto; }
+        .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:14px; }
+        .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px; }
+        .card h3 { margin:0 0 6px 0; font-size:13px; color:var(--muted); }
+        .card .big { font-size:20px; font-weight:600; }
+        table { width:100%; border-collapse:collapse; }
+        th, td { text-align:left; padding:10px; border-bottom:1px solid var(--border); vertical-align:top; }
+        th { font-size:12px; color:var(--muted); }
+        tbody tr:hover { background:#111; }
+        .status { padding:2px 8px; border-radius:999px; font-size:12px; border:1px solid var(--border); display:inline-block; }
+        .status.pending { color:#f1c40f; }
+        .status.processing { color:#2b7dfa; }
+        .status.shipped { color:#8e44ad; }
+        .status.delivered { color:var(--ok); }
+        .status.cancelled { color:var(--danger); }
+        .actions { display:flex; gap:8px; flex-wrap:wrap; }
+        .btn { padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:#0f0f0f; color:var(--fg); cursor:pointer; font-size:12px; }
+        .btn.danger { border-color:#402020; color:#ff7675; }
+        .empty { text-align:center; color:var(--muted); padding:30px; }
+        .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:20; }
+        .modal { width:min(700px,95vw); background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; }
+        .modal h2 { margin:0 0 12px 0; font-size:18px; }
+        .modal pre { background:#0f0f0f; border:1px solid var(--border); padding:10px; border-radius:8px; max-height:300px; overflow:auto; }
+        .modal .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+        .close { float:right; cursor:pointer; color:var(--muted); }
+        footer { padding:12px 18px; color:var(--muted); font-size:12px; }
+        /* Admin login overlay */
+        .login-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:30; }
+        .login-panel { width:min(420px,95vw); background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; }
+        .login-panel h2 { margin:0 0 10px 0; font-size:18px; }
+        .login-panel input { width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; background:#111; color:var(--fg); }
+        .login-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Admin Panel — Orders</h1>
+        <div class="controls">
+            <input id="search" type="search" placeholder="Search by name, phone, email, id…" />
+            <select id="statusFilter">
+                <option value="">All statuses</option>
+                <option>pending</option>
+                <option>processing</option>
+                <option>shipped</option>
+                <option>delivered</option>
+                <option>cancelled</option>
+            </select>
+            <button id="refresh" class="btn">Refresh</button>
+            <button id="autoRefresh" class="btn">Auto-refresh: Off</button>
+        </div>
+    </header>
+
+    <main>
+        <section class="stats">
+            <div class="card"><h3>Total orders</h3><div id="statTotal" class="big">0</div></div>
+            <div class="card"><h3>Pending</h3><div id="statPending" class="big">0</div></div>
+            <div class="card"><h3>Processing</h3><div id="statProcessing" class="big">0</div></div>
+            <div class="card"><h3>Delivered</h3><div id="statDelivered" class="big">0</div></div>
+        </section>
+
+        <section class="card">
+            <table id="ordersTable">
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Customer</th>
+                        <th>Contact</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersBody"></tbody>
+            </table>
+            <div id="empty" class="empty" style="display:none;">No orders yet.</div>
+        </section>
+    </main>
+
+    <div id="modalBackdrop" class="modal-backdrop">
+        <div class="modal">
+            <span id="closeModal" class="close">✕</span>
+            <h2>Order details</h2>
+            <div class="row">
+                <div>
+                    <h3>Summary</h3>
+                    <div id="orderSummary"></div>
+                </div>
+                <div>
+                    <h3>Raw JSON</h3>
+                    <pre id="orderJson"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin login modal -->
+    <div id="loginBackdrop" class="login-backdrop">
+        <div class="login-panel">
+            <h2>Admin Login</h2>
+            <div style="color:var(--muted);font-size:12px;margin-bottom:8px;">Enter admin password to view orders.</div>
+            <input id="adminPassword" type="password" placeholder="Password" />
+            <div class="login-actions">
+                <button id="loginBtn" class="btn">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>API base: <code id="apiBaseLabel"></code></footer>
+
+    <script>
+        // Configure your API base (works from file:// and http://)
+        const API_BASE = (typeof location !== 'undefined' && location.origin && location.origin.startsWith('http'))
+            ? (location.origin + '/api')
+            : 'http://localhost:3000/api';
+        document.getElementById('apiBaseLabel').textContent = API_BASE + '/orders';
+        function authToken(){ return localStorage.getItem('admin_token') || '' }
+        function authHeaders(extra={}){
+            const h = { ...extra };
+            const t = authToken();
+            if(t) h['Authorization'] = 'Bearer ' + t;
+            return h;
+        }
+
+        const els = {
+            body: document.getElementById('ordersBody'),
+            empty: document.getElementById('empty'),
+            search: document.getElementById('search'),
+            statusFilter: document.getElementById('statusFilter'),
+            refresh: document.getElementById('refresh'),
+            autoRefresh: document.getElementById('autoRefresh'),
+            statTotal: document.getElementById('statTotal'),
+            statPending: document.getElementById('statPending'),
+            statProcessing: document.getElementById('statProcessing'),
+            statDelivered: document.getElementById('statDelivered'),
+            modalBackdrop: document.getElementById('modalBackdrop'),
+            closeModal: document.getElementById('closeModal'),
+            orderSummary: document.getElementById('orderSummary'),
+            orderJson: document.getElementById('orderJson'),
+        };
+
+        let orders = [];
+        let autoTimer = null;
+
+        async function fetchOrders() {
+            try {
+                const res = await fetch(API_BASE + '/orders', { headers: authHeaders({ 'Accept': 'application/json' }) });
+                if (!res.ok) throw new Error('Failed: ' + res.status);
+                orders = await res.json();
+                renderOrders();
+            } catch (e) {
+                console.error(e);
+                els.body.innerHTML = '';
+                els.empty.style.display = 'block';
+                els.empty.textContent = 'Login required or failed to load orders.';
+            }
+        }
+
+        function currency(amount, code = 'DZD') {
+            try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: code, maximumFractionDigits: 0 }).format(amount); }
+            catch { return amount + ' ' + code; }
+        }
+
+        function renderOrders() {
+            const query = els.search.value.trim().toLowerCase();
+            const filt = els.statusFilter.value;
+            const filtered = orders.filter(o => {
+                const text = [
+                    o.id, o.customerName, o.email, o.phone, o.address?.city, o.address?.street
+                ].filter(Boolean).join(' ').toLowerCase();
+                const matchesText = !query || text.includes(query);
+                const matchesStatus = !filt || o.status === filt;
+                return matchesText && matchesStatus;
+            });
+
+            // Stats
+            els.statTotal.textContent = orders.length;
+            els.statPending.textContent = orders.filter(o => o.status === 'pending').length;
+            els.statProcessing.textContent = orders.filter(o => o.status === 'processing').length;
+            els.statDelivered.textContent = orders.filter(o => o.status === 'delivered').length;
+
+            els.body.innerHTML = '';
+            els.empty.style.display = filtered.length ? 'none' : 'block';
+            if (!filtered.length) return;
+
+            for (const o of filtered) {
+                const tr = document.createElement('tr');
+
+                // Order
+                const tdOrder = document.createElement('td');
+                tdOrder.innerHTML = `<div><strong>#${o.id}</strong></div><div style="color:var(--muted);font-size:12px;">${o.notes || ''}</div>`;
+                tr.appendChild(tdOrder);
+
+                // Customer
+                const tdCustomer = document.createElement('td');
+                tdCustomer.innerHTML = `<div>${o.customerName || '-'}</div><div style="color:var(--muted);font-size:12px;">${o.address?.street || ''} ${o.address?.city || ''}</div>`;
+                tr.appendChild(tdCustomer);
+
+                // Contact
+                const tdContact = document.createElement('td');
+                tdContact.innerHTML = `<div>${o.phone || '-'}</div><div style="color:var(--muted);font-size:12px;">${o.email || ''}</div>`;
+                tr.appendChild(tdContact);
+
+                // Items
+                const tdItems = document.createElement('td');
+                const itemsText = Array.isArray(o.items) ? o.items.map(i => `${i.name} ×${i.qty}`).join(', ') : '-';
+                tdItems.textContent = itemsText || '-';
+                tr.appendChild(tdItems);
+
+                // Total
+                const tdTotal = document.createElement('td');
+                tdTotal.textContent = currency(o.total ?? (Array.isArray(o.items) ? o.items.reduce((s,i)=>s+(i.price||0)*(i.qty||1),0) : 0));
+                tr.appendChild(tdTotal);
+
+                // Status
+                const tdStatus = document.createElement('td');
+                tdStatus.innerHTML = `
+                    <span class="status ${o.status}">${o.status}</span><br/>
+                    <select data-id="${o.id}" class="statusSelect" style="margin-top:6px;">
+                        ${['pending','processing','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${s===o.status?'selected':''}>${s}</option>`).join('')}
+                    </select>
+                `;
+                tr.appendChild(tdStatus);
+
+                // Created
+                const tdCreated = document.createElement('td');
+                const created = o.createdAt ? new Date(o.createdAt) : null;
+                tdCreated.innerHTML = created ? `${created.toLocaleString()}` : '-';
+                tr.appendChild(tdCreated);
+
+                // Actions
+                const tdActions = document.createElement('td');
+                tdActions.className = 'actions';
+                const viewBtn = document.createElement('button');
+                viewBtn.className = 'btn';
+                viewBtn.textContent = 'View';
+                viewBtn.onclick = () => openModal(o);
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn danger';
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = () => deleteOrder(o.id);
+                tdActions.append(viewBtn, deleteBtn);
+                tr.appendChild(tdActions);
+
+                els.body.appendChild(tr);
+            }
+
+            // Attach status change handlers
+            document.querySelectorAll('.statusSelect').forEach(sel => {
+                sel.onchange = async (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    const status = e.target.value;
+                    await updateStatus(id, status);
+                };
+            });
+        }
+
+        async function updateStatus(id, status) {
+            try {
+                const res = await fetch(API_BASE + '/orders/' + encodeURIComponent(id), {
+                    method: 'PATCH',
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({ status })
+                });
+                if (!res.ok) throw new Error('Failed to update status');
+                const updated = await res.json();
+                const i = orders.findIndex(o => o.id === id);
+                if (i >= 0) orders[i] = updated;
+                renderOrders();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+        async function deleteOrder(id) {
+            if (!confirm('Delete order #' + id + '?')) return;
+            try {
+                const res = await fetch(API_BASE + '/orders/' + encodeURIComponent(id), { method: 'DELETE', headers: authHeaders() });
+                if (!res.ok) throw new Error('Failed to delete');
+                orders = orders.filter(o => o.id !== id);
+                renderOrders();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+        function openModal(order) {
+            els.modalBackdrop.style.display = 'flex';
+            els.orderSummary.innerHTML = `
+                <div><strong>ID:</strong> ${order.id}</div>
+                <div><strong>Name:</strong> ${order.customerName || '-'}</div>
+                <div><strong>Phone:</strong> ${order.phone || '-'}</div>
+                <div><strong>Email:</strong> ${order.email || '-'}</div>
+                <div><strong>Address:</strong> ${order.address?.street || ''} ${order.address?.city || ''}</div>
+                <div><strong>Status:</strong> ${order.status}</div>
+                <div><strong>Total:</strong> ${currency(order.total)}</div>
+            `;
+            els.orderJson.textContent = JSON.stringify(order, null, 2);
+        }
+        function closeModal() { els.modalBackdrop.style.display = 'none'; }
+        els.closeModal.onclick = closeModal;
+        els.modalBackdrop.onclick = (e) => { if (e.target === els.modalBackdrop) closeModal(); };
+
+        // Events
+        els.search.oninput = renderOrders;
+        els.statusFilter.onchange = renderOrders;
+        els.refresh.onclick = fetchOrders;
+        els.autoRefresh.onclick = () => {
+            if (autoTimer) {
+                clearInterval(autoTimer);
+                autoTimer = null;
+                els.autoRefresh.textContent = 'Auto-refresh: Off';
+            } else {
+                autoTimer = setInterval(fetchOrders, 5000);
+                els.autoRefresh.textContent = 'Auto-refresh: On';
+            }
+        };
+
+        // Login flow
+        const loginBackdrop = document.getElementById('loginBackdrop');
+        const loginBtn = document.getElementById('loginBtn');
+        const adminPassword = document.getElementById('adminPassword');
+        async function login(password){
+            const res = await fetch(API_BASE + '/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+            if(!res.ok) throw new Error('Invalid password');
+            const data = await res.json();
+            localStorage.setItem('admin_token', data.token);
+        }
+        async function ensureAuth(){
+            if(!authToken()){
+                loginBackdrop.style.display = 'flex';
+                return false;
+            }
+            return true;
+        }
+        loginBtn.onclick = async () => {
+            try{
+                await login(adminPassword.value.trim());
+                loginBackdrop.style.display = 'none';
+                fetchOrders();
+            }catch(e){
+                alert('Invalid password');
+            }
+        };
+
+        // Initial load
+        (async () => { if(await ensureAuth()) fetchOrders(); })();
+    </script>
+</body>
+</html>

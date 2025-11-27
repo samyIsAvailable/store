@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Merci pour votre commande — My Algerian Store</title>
+  <style>
+    :root{ --bg:#0b0f19; --card:#121725; --muted:#8ea0b5; --text:#eaf0f8; --accent:#15c39a; --primary:#4f7cf7; }
+    body{ margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--text); }
+    .container{ max-width:700px; margin:0 auto; padding:28px; }
+    .panel{ background:var(--card); border:1px solid #1c2436; border-radius:16px; padding:22px; }
+    h1{ margin:0 0 10px 0; font-size:22px }
+    .muted{ color:var(--muted) }
+    .row{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:16px }
+    .btn{ display:inline-flex; align-items:center; justify-content:center; padding:10px 14px; border-radius:10px; border:1px solid #3450a8; color:#eaf0f8; background: linear-gradient(135deg, var(--primary), #7b5cf7); text-decoration:none; font-weight:700 }
+    .summary{ background:#10182b; border:1px dashed #24314f; border-radius:12px; padding:12px; margin-top:12px; color:#cfe3ff; white-space:pre-wrap }
+    .small{ color:var(--muted); font-size:12px; margin-top:8px }
+    .actions{ display:flex; gap:10px; margin-top:12px }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="panel">
+      <h1>Merci pour votre commande !</h1>
+      <div id="msg" class="muted">Nous vous contacterons pour confirmer la livraison.</div>
+      <div class="summary" id="summary">Chargement…</div>
+      <div class="actions">
+        <button class="btn" id="copyIdBtn">Copier l'ID</button>
+        <a class="btn" href="/index.html">Retour à la boutique</a>
+      </div>
+      <div class="small">Livraison: 24–72h selon la wilaya. Paiement à la livraison.</div>
+    </div>
+  </div>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const API_BASE = (typeof location !== 'undefined' && location.origin && location.origin.startsWith('http'))
+      ? (location.origin + '/api')
+      : 'http://localhost:3000/api';
+    const id = params.get('id');
+    const summaryEl = document.getElementById('summary');
+    const copyIdBtn = document.getElementById('copyIdBtn');
+    async function load(){
+      if(!id){ summaryEl.textContent = "Commande enregistrée."; return; }
+      try{
+        const res = await fetch(API_BASE + '/orders/' + encodeURIComponent(id), { headers: { 'Accept':'application/json' } });
+        if(!res.ok) throw new Error('Not found');
+        const o = await res.json();
+        const lines = [
+          `Commande #: ${o.id}`,
+          `Client: ${o.customerName || '—'}`,
+          `Téléphone: ${o.phone || '—'}`,
+          `Adresse: ${(o.address?.street || '')} ${(o.address?.city || '')}`,
+          `Statut: ${o.status}`,
+          `Total: ${o.total} DZD`,
+          `Articles: ${(Array.isArray(o.items) ? o.items.map(i=>`${i.name} ×${i.qty}`).join(', ') : '-')}`,
+          `Créé: ${o.createdAt ? new Date(o.createdAt).toLocaleString() : '-'}`
+        ];
+        summaryEl.textContent = lines.join('\n');
+      }catch(e){
+        summaryEl.textContent = 'Commande enregistrée.';
+      }
+    }
+    load();
+
+    copyIdBtn.addEventListener('click', async () => {
+      try{
+        await navigator.clipboard.writeText(id || '');
+        alert("ID de commande copié");
+      }catch(e){
+        alert("Impossible de copier l'ID");
+      }
+    });
+  </script>
+</body>
+</html>
