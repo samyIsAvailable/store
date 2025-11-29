@@ -245,5 +245,6 @@ app.delete('/api/orders/:id', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`My Algerian Store server running at http://localhost:${PORT}`);
+  console.log(`My Algerian Store server running at https://www.boutiquedz.tech`);
 });
+
